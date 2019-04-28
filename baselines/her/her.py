@@ -11,6 +11,24 @@ from baselines.common.mpi_moments import mpi_moments
 import baselines.her.experiment.config as config
 from baselines.her.rollout import RolloutWorker
 
+from pynput.keyboard import Key, Listener
+
+esc_pressed = False
+
+
+def on_press(key):
+    return True
+
+
+def on_release(key):
+    if key == Key.esc:
+        # Stop listener
+        global esc_pressed
+        esc_pressed = True
+        print("ESC pressed. Waiting for epoch to be done...")
+        return False
+
+
 def mpi_average(value):
     if not isinstance(value, list):
         value = [value]
@@ -22,6 +40,12 @@ def mpi_average(value):
 def train(*, policy, rollout_worker, evaluator,
           n_epochs, n_test_rollouts, n_cycles, n_batches, policy_save_interval,
           save_path, demo_file, **kwargs):
+
+    listener = Listener(
+        on_press=on_press,
+        on_release=on_release)
+    listener.start()
+
     rank = MPI.COMM_WORLD.Get_rank()
 
     if save_path:
@@ -80,6 +104,10 @@ def train(*, policy, rollout_worker, evaluator,
         MPI.COMM_WORLD.Bcast(root_uniform, root=0)
         if rank != 0:
             assert local_uniform[0] != root_uniform[0]
+
+        if esc_pressed:
+            print("Stopped at epoch " + str(epoch))
+            break
 
     return policy
 
