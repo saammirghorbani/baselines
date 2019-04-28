@@ -13,7 +13,7 @@ from baselines.her.rollout import RolloutWorker
 
 from pynput.keyboard import Key, Listener
 
-esc_pressed = False
+f1_pressed = False
 
 
 def on_press(key):
@@ -21,11 +21,11 @@ def on_press(key):
 
 
 def on_release(key):
-    if key == Key.esc:
+    if key == Key.f1:
         # Stop listener
-        global esc_pressed
-        esc_pressed = True
-        print("ESC pressed. Waiting for epoch to be done...")
+        global f1_pressed
+        f1_pressed = True
+        print("F1 pressed. Waiting for epoch to be done...")
         return False
 
 
@@ -105,7 +105,7 @@ def train(*, policy, rollout_worker, evaluator,
         if rank != 0:
             assert local_uniform[0] != root_uniform[0]
 
-        if esc_pressed:
+        if f1_pressed:
             print("Stopped at epoch " + str(epoch))
             break
 
