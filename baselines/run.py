@@ -11,8 +11,9 @@ from baselines.common.vec_env import VecFrameStack, VecNormalize, VecEnv
 from baselines.common.vec_env.vec_video_recorder import VecVideoRecorder
 from baselines.common.cmd_util import common_arg_parser, parse_unknown_args, make_vec_env, make_env
 from baselines.common.tf_util import get_session
+from baselines import her
 from baselines import logger
-from importlib import import_module
+from importlib import import_module, reload
 
 try:
     from mpi4py import MPI
@@ -57,7 +58,6 @@ def train(args, extra_args):
     total_timesteps = int(args.num_timesteps)
     seed = args.seed
 
-    learn = get_learn_function(args.alg)
     alg_kwargs = get_learn_function_defaults(args.alg, env_type)
     alg_kwargs.update(extra_args)
 
@@ -72,6 +72,8 @@ def train(args, extra_args):
             alg_kwargs['network'] = get_default_network(env_type)
 
     print('Training {} on {}:{} with arguments \n{}'.format(args.alg, env_type, env_id, alg_kwargs))
+
+    learn = get_learn_function(args.alg)
 
     model = learn(
         env=env,
@@ -152,6 +154,7 @@ def get_default_network(env_type):
         return 'mlp'
 
 def get_alg_module(alg, submodule=None):
+
     submodule = submodule or alg
     try:
         # first try to import the alg module from baselines
@@ -218,6 +221,7 @@ def main(args):
         obs = env.reset()
 
         state = model.initial_state if hasattr(model, 'initial_state') else None
+        print(state)
         dones = np.zeros((1,))
 
         episode_rew = 0

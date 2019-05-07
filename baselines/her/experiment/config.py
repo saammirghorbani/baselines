@@ -13,7 +13,6 @@ DEFAULT_ENV_PARAMS = {
     },
 }
 
-
 DEFAULT_PARAMS = {
     # env
     'max_u': 1.,  # max absolute value of actions on different coordinates

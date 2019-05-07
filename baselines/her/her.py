@@ -5,11 +5,14 @@ import numpy as np
 import json
 from mpi4py import MPI
 
+import baselines
 from baselines import logger
 from baselines.common import set_global_seeds, tf_util
 from baselines.common.mpi_moments import mpi_moments
 import baselines.her.experiment.config as config
 from baselines.her.rollout import RolloutWorker
+from importlib import reload
+from copy import deepcopy
 
 from pynput.keyboard import Key, Listener
 
@@ -136,12 +139,14 @@ def learn(*, network, env, total_timesteps,
 
     # Prepare params.
     params = config.DEFAULT_PARAMS
+
     env_name = env.spec.id
     params['env_name'] = env_name
     params['replay_strategy'] = replay_strategy
     if env_name in config.DEFAULT_ENV_PARAMS:
         params.update(config.DEFAULT_ENV_PARAMS[env_name])  # merge env-specific parameters in
     params.update(**override_params)  # makes it possible to override any parameter
+
     with open(os.path.join(logger.get_dir(), 'params.json'), 'w') as f:
          json.dump(params, f)
     params = config.prepare_params(params)
@@ -191,6 +196,8 @@ def learn(*, network, env, total_timesteps,
         eval_params[name] = params[name]
 
     eval_env = eval_env or env
+
+    env.envs[0].set_other_model(policy)
 
     rollout_worker = RolloutWorker(env, policy, dims, logger, monitor=True, **rollout_params)
     evaluator = RolloutWorker(eval_env, policy, dims, logger, **eval_params)
